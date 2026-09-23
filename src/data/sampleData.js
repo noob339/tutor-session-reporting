@@ -14,6 +14,7 @@ export const students = [
     schedule: "Tuesdays · 4:00–5:30 PM",
     status: "Active",
     stoppedReason: "",
+    stoppedDate: null,
   },
   {
     id: "student-2",
@@ -24,6 +25,7 @@ export const students = [
     schedule: "Thursdays · 3:30–4:30 PM",
     status: "Active",
     stoppedReason: "",
+    stoppedDate: null,
   },
   {
     id: "student-3",
@@ -34,6 +36,7 @@ export const students = [
     schedule: "Wednesdays · 5:00–6:00 PM",
     status: "Active",
     stoppedReason: "",
+    stoppedDate: null,
   },
   {
     id: "student-4",
@@ -43,7 +46,8 @@ export const students = [
     site: "Learning Center",
     schedule: "Previously Mondays · 4:00–5:00 PM",
     status: "Stopped",
-    stoppedReason: "Moved out of the area · September 15, 2026",
+    stoppedReason: "Moved out of the area",
+    stoppedDate: "2026-09-15",
   },
 ];
 

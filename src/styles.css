@@ -24,7 +24,8 @@ body {
 }
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 button,
@@ -37,7 +38,8 @@ button {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible {
   outline: 3px solid #9de4c6;
   outline-offset: 4px;
 }
@@ -484,6 +486,130 @@ footer {
   margin-top: auto;
   color: #a9b5bf;
   font-size: 0.74rem;
+}
+.data-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+.primary-button,
+.secondary-button,
+.danger-button {
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 0.86rem;
+  border: 1px solid #64746b;
+  min-height: 42px;
+}
+.primary-button {
+  background: #b8e7cc;
+  color: #1b3025;
+  font-weight: 600;
+}
+.secondary-button {
+  background: #2b343b;
+  color: #edf0f3;
+  border-color: #59646e;
+}
+.danger-button {
+  background: #59373a;
+  color: #ffe0e0;
+  border-color: #b47b80;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.entry-panel {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.entry-panel > h2 {
+  margin-bottom: 20px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  width: 100%;
+  min-width: 0;
+}
+textarea {
+  background: #191e23;
+  border: 1px solid #59646e;
+  border-radius: 6px;
+  color: #edf0f3;
+  padding: 10px 12px;
+  resize: vertical;
+}
+.full-width {
+  grid-column: 1 / -1;
+}
+.field-note {
+  color: #c4ccd3;
+  align-self: center;
+  font-size: 0.8rem;
+}
+.form-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.feedback {
+  padding: 14px 16px;
+  border: 1px solid #59646e;
+  border-radius: 7px;
+  margin: 16px 0;
+  font-size: 0.9rem;
+}
+.success-message {
+  background: #293e34;
+  border-color: #5a816a;
+  color: #d3f2de;
+}
+.error-message {
+  background: #482e33;
+  border-color: #b67f89;
+  color: #ffe4e8;
+}
+.student-details-button {
+  margin-top: 15px;
+}
+.achievement-heading {
+  border-top: 1px solid #3c444c;
+  padding-top: 20px;
+  margin-top: 24px;
+}
+.detail-achievements {
+  list-style: none;
+  padding: 0;
+}
+.detail-achievements li {
+  border-bottom: 1px solid #3c444c;
+  padding: 16px 0;
+}
+.achievement-editor {
+  padding-top: 16px;
+}
+.achievement-editor h3 {
+  margin-bottom: 16px;
+}
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .entry-panel {
+    padding: 18px;
+  }
 }
 .sr-only {
   position: absolute;

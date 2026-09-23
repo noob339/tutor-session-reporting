@@ -1,34 +1,29 @@
 import { useState } from "react";
-import {
-  achievements,
-  sessions,
-  students,
-  tutors,
-} from "../data/sampleData.js";
+import { calculateReport, currentMonth } from "../lib/reports.js";
+import { formatDate } from "../data/sampleData.js";
 
-export default function MonthlyReports() {
-  const [month, setMonth] = useState("2026-09");
-  const [tutorId, setTutorId] = useState("");
-  const inReport = (record) =>
-    month &&
-    record.date.startsWith(`${month}-`) &&
-    (!tutorId || record.tutorId === tutorId);
-  const records = sessions.filter(inReport);
-  const milestones = achievements.filter(inReport);
-  const completed = records.filter((record) => record.status === "completed");
-  const absences = records.filter((record) =>
-    ["TA", "SA"].includes(record.status),
+export default function MonthlyReports({ records: data, preview }) {
+  const { achievements, sessions, students, tutors } = data;
+  const [month, setMonth] = useState(() =>
+    preview ? "2026-09" : currentMonth(),
   );
-  const holidays = records.filter((record) => record.status === "H");
-  const hours =
-    completed.reduce((total, record) => total + record.minutes, 0) / 60;
+  const [tutorId, setTutorId] = useState("");
+  const {
+    records,
+    milestones,
+    completedCount,
+    minutes,
+    absenceCount,
+    holidayCount,
+  } = calculateReport(sessions, achievements, month, tutorId);
+  const hours = minutes / 60;
   const summary = [
-    ["Completed sessions", completed.length],
+    ["Completed sessions", completedCount],
     [
       "Tutoring hours",
       hours.toLocaleString("en-US", { maximumFractionDigits: 2 }),
     ],
-    ["Absences", absences.length],
+    ["Absences", absenceCount],
     ["Achievements", milestones.length],
   ];
 
@@ -63,7 +58,11 @@ export default function MonthlyReports() {
             ))}
           </select>
         </label>
-        <p>Filters apply to fictional sample data.</p>
+        <p>
+          {preview
+            ? "Filters apply to sample data."
+            : "Tutor filtering is a demo control, not authorization."}
+        </p>
       </div>
       <div aria-live="polite" aria-atomic="true">
         {!month && (
@@ -76,17 +75,18 @@ export default function MonthlyReports() {
             <div className="panel stat" key={label}>
               <p>{label}</p>
               <strong>{value}</strong>
-              <span>Sample total</span>
+              <span>{preview ? "Sample total" : "Database total"}</span>
             </div>
           ))}
         </div>
         <p className="report-note">
           Absences include TA and SA. Holidays are counted separately:{" "}
-          {holidays.length}. Only completed sessions contribute tutoring hours.
+          {holidayCount}. Only completed sessions contribute tutoring hours (
+          {minutes} minutes).
         </p>
         {month && records.length === 0 && milestones.length === 0 && (
           <p className="empty-state">
-            No sample records for this selection. Try September 2026.
+            No records for this selection.{preview && " Try September 2026."}
           </p>
         )}
       </div>
@@ -96,7 +96,9 @@ export default function MonthlyReports() {
             <h2 id="achievements-heading">Student achievements</h2>
             <p>Milestones recorded during the selected month</p>
           </div>
-          <span className="badge">Sample report</span>
+          <span className="badge">
+            {preview ? "Sample report" : "Database report"}
+          </span>
         </div>
         {milestones.length ? (
           <ul className="milestone-list">
@@ -107,21 +109,22 @@ export default function MonthlyReports() {
                 </span>
                 <div>
                   <h3>
-                    {
-                      students.find(
-                        (student) => student.id === milestone.studentId,
-                      ).name
-                    }
+                    {students.find(
+                      (student) => student.id === milestone.studentId,
+                    )?.name ?? "Unknown student"}
                   </h3>
                   <p>{milestone.description}</p>
+                  <p>
+                    {formatDate(milestone.date)} ·{" "}
+                    {tutors.find((tutor) => tutor.id === milestone.tutorId)
+                      ?.name ?? "Unknown tutor"}
+                  </p>
                 </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="empty-state">
-            No sample achievements for this selection.
-          </p>
+          <p className="empty-state">No achievements for this selection.</p>
         )}
       </section>
     </>

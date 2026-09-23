@@ -1,11 +1,18 @@
-import {
-  achievements,
-  formatDate,
-  students,
-  tutors,
-} from "../data/sampleData.js";
+import { formatDate } from "../data/sampleData.js";
+import { useState } from "react";
+import StudentDetails from "./StudentDetails.jsx";
 
-export default function Students() {
+export default function Students({
+  records,
+  preview,
+  onSaved,
+  onAchievementRemoved,
+  onBusyChange,
+}) {
+  const { achievements, students, tutors } = records;
+  const [selectedId, setSelectedId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const selected = students.find((student) => student.id === selectedId);
   return (
     <>
       <div className="page-heading">
@@ -15,10 +22,28 @@ export default function Students() {
       </div>
       <div className="section-intro">
         <h2>
-          Sample student roster <span className="count">{students.length}</span>
+          {preview ? "Sample student roster" : "Student roster"}{" "}
+          <span className="count">{students.length}</span>
         </h2>
-        <p>Read-only preview · Updates will be added next.</p>
+        <p>{preview ? "Read-only preview" : "Fictional database records"}</p>
       </div>
+      {selected && (
+        <StudentDetails
+          key={selected.id}
+          student={selected}
+          tutors={tutors}
+          achievements={achievements.filter(
+            (achievement) => achievement.studentId === selected.id,
+          )}
+          onSaved={onSaved}
+          onAchievementRemoved={onAchievementRemoved}
+          onBusyChange={(value) => {
+            setBusy(value);
+            onBusyChange(value);
+          }}
+          onClose={() => setSelectedId("")}
+        />
+      )}
       <div className="student-grid">
         {students.map((student) => {
           const milestones = achievements.filter(
@@ -41,11 +66,20 @@ export default function Students() {
               </div>
               <h2>{student.name}</h2>
               <p className="muted">{student.focus}</p>
+              <button
+                className="secondary-button student-details-button"
+                type="button"
+                disabled={preview || busy}
+                onClick={() => setSelectedId(student.id)}
+              >
+                Edit details for {student.name}
+              </button>
               <dl>
                 <div>
                   <dt>Assigned tutor</dt>
                   <dd>
-                    {tutors.find((tutor) => tutor.id === student.tutorId).name}
+                    {tutors.find((tutor) => tutor.id === student.tutorId)
+                      ?.name ?? "Unknown tutor"}
                   </dd>
                 </div>
                 <div>
@@ -62,6 +96,9 @@ export default function Students() {
                   <strong>Stopped tutoring</strong>
                   <br />
                   {student.stoppedReason}
+                  {student.stoppedDate && (
+                    <> · {formatDate(student.stoppedDate)}</>
+                  )}
                 </p>
               )}
               <div className="achievement">
@@ -74,15 +111,19 @@ export default function Students() {
                     </p>
                   ))
                 ) : (
-                  <p className="muted">
-                    No achievements recorded in this sample.
-                  </p>
+                  <p className="muted">No achievements recorded.</p>
                 )}
               </div>
             </article>
           );
         })}
       </div>
+      {!students.length && (
+        <p className="empty-state">
+          No students available. Run seed.sql in your dedicated demo project to
+          add the fictional roster.
+        </p>
+      )}
     </>
   );
 }
