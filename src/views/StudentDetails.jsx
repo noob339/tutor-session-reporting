@@ -7,7 +7,7 @@ import {
 import { formatDate } from "../data/sampleData.js";
 import { todayDate } from "../lib/reports.js";
 
-export default function StudentDetails({
+const StudentDetails = ({
   student,
   tutors,
   achievements,
@@ -15,7 +15,7 @@ export default function StudentDetails({
   onAchievementRemoved,
   onBusyChange,
   onClose,
-}) {
+}) => {
   const [draft, setDraft] = useState({ ...student });
   const [milestone, setMilestone] = useState(null);
   const [editingAchievement, setEditingAchievement] = useState(false);
@@ -25,7 +25,7 @@ export default function StudentDetails({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  async function perform(action, message) {
+  const perform = async (action, message) => {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
@@ -42,12 +42,19 @@ export default function StudentDetails({
       setBusy(false);
       onBusyChange(false);
     }
-  }
+  };
 
-  function change(field, value) {
-    setDraft((previous) => ({ ...previous, [field]: value }));
-  }
-  function startAchievement(record) {
+  const handleStudentFieldChange = (event) => {
+    const { name, value } = event.currentTarget;
+    setDraft((previous) => ({ ...previous, [name]: value }));
+  };
+
+  const handleAchievementFieldChange = (event) => {
+    const { name, value } = event.currentTarget;
+    setMilestone((previous) => ({ ...previous, [name]: value }));
+  };
+
+  const startAchievement = (record) => {
     setEditingAchievement(Boolean(record));
     setMilestone(
       record
@@ -63,7 +70,50 @@ export default function StudentDetails({
     setRemovingId("");
     setError("");
     setSuccess("");
-  }
+  };
+
+  const handleStudentSubmit = (event) => {
+    event.preventDefault();
+    perform(async () => {
+      const saved = await updateStudent(draft);
+      onSaved("students", saved);
+      setDraft(saved);
+    }, "Student details saved in the database. Historical session and achievement tutors are unchanged.");
+  };
+
+  const handleAchievementSubmit = (event) => {
+    event.preventDefault();
+    perform(async () => {
+      const saved = await saveAchievement(milestone, editingAchievement);
+      onSaved("achievements", saved);
+      setMilestone(null);
+    }, "Achievement saved in the database.");
+  };
+
+  const handleNewAchievement = () => startAchievement();
+
+  const handleEditAchievement = (event) => {
+    const record = achievements.find(
+      (item) => item.id === event.currentTarget.value,
+    );
+    if (record) startAchievement(record);
+  };
+
+  const handleRemoveAchievement = (event) => {
+    setRemovingId(event.currentTarget.value);
+    setMilestone(null);
+  };
+
+  const handleConfirmRemoval = () => {
+    perform(async () => {
+      const id = await deleteAchievement(removingId);
+      onAchievementRemoved(id);
+      setRemovingId("");
+    }, "Achievement removed from the database.");
+  };
+
+  const handleKeepAchievement = () => setRemovingId("");
+  const handleCancelAchievement = () => setMilestone(null);
 
   return (
     <section
@@ -81,16 +131,7 @@ export default function StudentDetails({
           Close details
         </button>
       </div>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          perform(async () => {
-            const saved = await updateStudent(draft);
-            onSaved("students", saved);
-            setDraft(saved);
-          }, "Student details saved in the database. Historical session and achievement tutors are unchanged.");
-        }}
-      >
+      <form onSubmit={handleStudentSubmit}>
         <fieldset disabled={busy} className="form-grid">
           <legend className="sr-only">Student details</legend>
           <label>
@@ -98,7 +139,8 @@ export default function StudentDetails({
             <input
               required
               value={draft.name}
-              onChange={(event) => change("name", event.target.value)}
+              name="name"
+              onChange={handleStudentFieldChange}
             />
           </label>
           <label>
@@ -106,7 +148,8 @@ export default function StudentDetails({
             <select
               required
               value={draft.tutorId}
-              onChange={(event) => change("tutorId", event.target.value)}
+              name="tutorId"
+              onChange={handleStudentFieldChange}
             >
               {tutors.map((tutor) => (
                 <option key={tutor.id} value={tutor.id}>
@@ -119,28 +162,32 @@ export default function StudentDetails({
             Learning focus
             <input
               value={draft.focus}
-              onChange={(event) => change("focus", event.target.value)}
+              name="focus"
+              onChange={handleStudentFieldChange}
             />
           </label>
           <label>
             Tutoring site
             <input
               value={draft.site}
-              onChange={(event) => change("site", event.target.value)}
+              name="site"
+              onChange={handleStudentFieldChange}
             />
           </label>
           <label>
             Schedule (day and time)
             <input
               value={draft.schedule}
-              onChange={(event) => change("schedule", event.target.value)}
+              name="schedule"
+              onChange={handleStudentFieldChange}
             />
           </label>
           <label>
             Student status
             <select
               value={draft.status}
-              onChange={(event) => change("status", event.target.value)}
+              name="status"
+              onChange={handleStudentFieldChange}
             >
               <option>Active</option>
               <option>Stopped</option>
@@ -156,9 +203,8 @@ export default function StudentDetails({
                   min="0001-01-01"
                   max="9999-12-31"
                   value={draft.stoppedDate ?? ""}
-                  onChange={(event) =>
-                    change("stoppedDate", event.target.value)
-                  }
+                  name="stoppedDate"
+                  onChange={handleStudentFieldChange}
                 />
               </label>
               <label>
@@ -166,9 +212,8 @@ export default function StudentDetails({
                 <input
                   required
                   value={draft.stoppedReason}
-                  onChange={(event) =>
-                    change("stoppedReason", event.target.value)
-                  }
+                  name="stoppedReason"
+                  onChange={handleStudentFieldChange}
                 />
               </label>
             </>
@@ -186,7 +231,7 @@ export default function StudentDetails({
           className="secondary-button"
           type="button"
           disabled={busy}
-          onClick={() => startAchievement()}
+          onClick={handleNewAchievement}
         >
           Add achievement
         </button>
@@ -206,7 +251,8 @@ export default function StudentDetails({
                   className="secondary-button"
                   type="button"
                   disabled={busy}
-                  onClick={() => startAchievement(record)}
+                  value={record.id}
+                  onClick={handleEditAchievement}
                 >
                   Edit achievement
                 </button>
@@ -214,10 +260,8 @@ export default function StudentDetails({
                   className="secondary-button"
                   type="button"
                   disabled={busy}
-                  onClick={() => {
-                    setRemovingId(record.id);
-                    setMilestone(null);
-                  }}
+                  value={record.id}
+                  onClick={handleRemoveAchievement}
                 >
                   Remove achievement
                 </button>
@@ -230,13 +274,7 @@ export default function StudentDetails({
                       className="danger-button"
                       type="button"
                       disabled={busy}
-                      onClick={() =>
-                        perform(async () => {
-                          const id = await deleteAchievement(record.id);
-                          onAchievementRemoved(id);
-                          setRemovingId("");
-                        }, "Achievement removed from the database.")
-                      }
+                      onClick={handleConfirmRemoval}
                     >
                       Confirm removal
                     </button>
@@ -244,7 +282,7 @@ export default function StudentDetails({
                       className="secondary-button"
                       type="button"
                       disabled={busy}
-                      onClick={() => setRemovingId("")}
+                      onClick={handleKeepAchievement}
                     >
                       Keep achievement
                     </button>
@@ -258,20 +296,7 @@ export default function StudentDetails({
         <p className="muted">No achievements recorded.</p>
       )}
       {milestone && (
-        <form
-          className="achievement-editor"
-          onSubmit={(event) => {
-            event.preventDefault();
-            perform(async () => {
-              const saved = await saveAchievement(
-                milestone,
-                editingAchievement,
-              );
-              onSaved("achievements", saved);
-              setMilestone(null);
-            }, "Achievement saved in the database.");
-          }}
-        >
+        <form className="achievement-editor" onSubmit={handleAchievementSubmit}>
           <h3>
             {editingAchievement ? "Correct achievement" : "New achievement"}
           </h3>
@@ -285,9 +310,8 @@ export default function StudentDetails({
                 max="9999-12-31"
                 required
                 value={milestone.date}
-                onChange={(event) =>
-                  setMilestone({ ...milestone, date: event.target.value })
-                }
+                name="date"
+                onChange={handleAchievementFieldChange}
               />
             </label>
             <label>
@@ -295,9 +319,8 @@ export default function StudentDetails({
               <select
                 required
                 value={milestone.tutorId}
-                onChange={(event) =>
-                  setMilestone({ ...milestone, tutorId: event.target.value })
-                }
+                name="tutorId"
+                onChange={handleAchievementFieldChange}
               >
                 {tutors.map((tutor) => (
                   <option key={tutor.id} value={tutor.id}>
@@ -312,12 +335,8 @@ export default function StudentDetails({
                 required
                 rows="3"
                 value={milestone.description}
-                onChange={(event) =>
-                  setMilestone({
-                    ...milestone,
-                    description: event.target.value,
-                  })
-                }
+                name="description"
+                onChange={handleAchievementFieldChange}
               />
             </label>
             <div className="form-actions full-width">
@@ -327,7 +346,7 @@ export default function StudentDetails({
               <button
                 className="secondary-button"
                 type="button"
-                onClick={() => setMilestone(null)}
+                onClick={handleCancelAchievement}
               >
                 Cancel achievement
               </button>
@@ -347,4 +366,6 @@ export default function StudentDetails({
       )}
     </section>
   );
-}
+};
+
+export default StudentDetails;

@@ -3,12 +3,7 @@ import { attendanceCodes, formatDate } from "../data/sampleData.js";
 import { saveSession } from "../lib/database.js";
 import { todayDate } from "../lib/reports.js";
 
-export default function Attendance({
-  records: data,
-  preview,
-  onSaved,
-  onBusyChange,
-}) {
+const Attendance = ({ records: data, preview, onSaved, onBusyChange }) => {
   const { sessions, students, tutors } = data;
   const [studentId, setStudentId] = useState("");
   const [editing, setEditing] = useState(false);
@@ -18,7 +13,7 @@ export default function Attendance({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  function startEntry(session) {
+  const startEntry = (session) => {
     setError("");
     setSuccess("");
     setEditing(Boolean(session));
@@ -37,13 +32,52 @@ export default function Attendance({
             notes: "",
           },
     );
-  }
+  };
 
-  function change(field, value) {
-    setDraft((previous) => ({ ...previous, [field]: value }));
-  }
+  const handleFieldChange = (event) => {
+    const { name, value } = event.currentTarget;
+    setDraft((previous) => ({ ...previous, [name]: value }));
+  };
 
-  async function submit(event) {
+  const handleNewSession = () => startEntry();
+
+  const handleEditSession = (event) => {
+    const session = sessions.find(
+      (item) => item.id === event.currentTarget.value,
+    );
+    if (session) startEntry(session);
+  };
+
+  const handleStudentChange = (event) => {
+    const studentId = event.currentTarget.value;
+    setDraft((previous) => ({
+      ...previous,
+      studentId,
+      // Corrections retain the historical tutor until explicitly changed.
+      tutorId: editing
+        ? previous.tutorId
+        : (students.find((item) => item.id === studentId)?.tutorId ?? ""),
+    }));
+  };
+
+  const handleStatusChange = (event) => {
+    const status = event.currentTarget.value;
+    setDraft((previous) => ({
+      ...previous,
+      status,
+      minutes: status === "completed" ? previous.minutes || 60 : 0,
+    }));
+  };
+
+  const handleCancel = () => {
+    setDraft(null);
+    setError("");
+  };
+
+  const handleStudentFilterChange = (event) =>
+    setStudentId(event.currentTarget.value);
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (preview || savingRef.current) return;
     savingRef.current = true;
@@ -66,7 +100,7 @@ export default function Attendance({
       setSaving(false);
       onBusyChange(false);
     }
-  }
+  };
   const records = sessions
     .filter((session) => !studentId || session.studentId === studentId)
     .toSorted((a, b) => b.date.localeCompare(a.date));
@@ -88,7 +122,7 @@ export default function Attendance({
           type="button"
           className="primary-button"
           disabled={preview || saving || !students.length || !tutors.length}
-          onClick={() => startEntry()}
+          onClick={handleNewSession}
         >
           Record session
         </button>
@@ -109,7 +143,7 @@ export default function Attendance({
           <h2 id="entry-heading">
             {editing ? "Correct attendance record" : "Record attendance"}
           </h2>
-          <form onSubmit={submit}>
+          <form onSubmit={handleSubmit}>
             <fieldset disabled={saving} className="form-grid">
               <legend className="sr-only">Session details</legend>
               <label>
@@ -117,19 +151,7 @@ export default function Attendance({
                 <select
                   value={draft.studentId}
                   required
-                  onChange={(event) => {
-                    const id = event.target.value;
-                    // New entries default to the current assignment. Corrections retain
-                    // the historical tutor unless explicitly changed by the visitor.
-                    setDraft((previous) => ({
-                      ...previous,
-                      studentId: id,
-                      tutorId: editing
-                        ? previous.tutorId
-                        : (students.find((item) => item.id === id)?.tutorId ??
-                          ""),
-                    }));
-                  }}
+                  onChange={handleStudentChange}
                 >
                   {students.map((student) => (
                     <option key={student.id} value={student.id}>
@@ -144,7 +166,8 @@ export default function Attendance({
                 <select
                   value={draft.tutorId}
                   required
-                  onChange={(event) => change("tutorId", event.target.value)}
+                  name="tutorId"
+                  onChange={handleFieldChange}
                 >
                   {tutors.map((tutor) => (
                     <option key={tutor.id} value={tutor.id}>
@@ -161,23 +184,13 @@ export default function Attendance({
                   max="9999-12-31"
                   required
                   value={draft.date}
-                  onChange={(event) => change("date", event.target.value)}
+                  name="date"
+                  onChange={handleFieldChange}
                 />
               </label>
               <label>
                 Attendance status
-                <select
-                  value={draft.status}
-                  onChange={(event) => {
-                    const status = event.target.value;
-                    setDraft((previous) => ({
-                      ...previous,
-                      status,
-                      minutes:
-                        status === "completed" ? previous.minutes || 60 : 0,
-                    }));
-                  }}
-                >
+                <select value={draft.status} onChange={handleStatusChange}>
                   {Object.entries(attendanceCodes).map(([code, label]) => (
                     <option key={code} value={code}>
                       {label}
@@ -196,7 +209,8 @@ export default function Attendance({
                   required
                   disabled={draft.status !== "completed"}
                   value={draft.minutes}
-                  onChange={(event) => change("minutes", event.target.value)}
+                  name="minutes"
+                  onChange={handleFieldChange}
                 />
               </label>
               <p className="field-note">
@@ -208,7 +222,8 @@ export default function Attendance({
                 <textarea
                   rows="3"
                   value={draft.notes}
-                  onChange={(event) => change("notes", event.target.value)}
+                  name="notes"
+                  onChange={handleFieldChange}
                 />
               </label>
               <div className="form-actions full-width">
@@ -222,10 +237,7 @@ export default function Attendance({
                 <button
                   className="secondary-button"
                   type="button"
-                  onClick={() => {
-                    setDraft(null);
-                    setError("");
-                  }}
+                  onClick={handleCancel}
                 >
                   Cancel
                 </button>
@@ -251,10 +263,7 @@ export default function Attendance({
           </div>
           <label>
             Student
-            <select
-              value={studentId}
-              onChange={(event) => setStudentId(event.target.value)}
-            >
+            <select value={studentId} onChange={handleStudentFilterChange}>
               <option value="">All students</option>
               {students.map((student) => (
                 <option key={student.id} value={student.id}>
@@ -314,7 +323,8 @@ export default function Attendance({
                       type="button"
                       className="secondary-button"
                       disabled={preview || saving}
-                      onClick={() => startEntry(session)}
+                      value={session.id}
+                      onClick={handleEditSession}
                       aria-label={`Edit ${students.find((student) => student.id === session.studentId)?.name ?? "student"} session on ${formatDate(session.date)}`}
                     >
                       Edit
@@ -353,4 +363,6 @@ export default function Attendance({
       </section>
     </>
   );
-}
+};
+
+export default Attendance;

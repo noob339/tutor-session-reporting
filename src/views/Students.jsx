@@ -2,17 +2,26 @@ import { formatDate } from "../data/sampleData.js";
 import { useState } from "react";
 import StudentDetails from "./StudentDetails.jsx";
 
-export default function Students({
+const Students = ({
   records,
   preview,
   onSaved,
   onAchievementRemoved,
   onBusyChange,
-}) {
+}) => {
   const { achievements, students, tutors } = records;
   const [selectedId, setSelectedId] = useState("");
   const [busy, setBusy] = useState(false);
   const selected = students.find((student) => student.id === selectedId);
+  const selectedAchievements = achievements.filter(
+    (achievement) => achievement.studentId === selectedId,
+  );
+  const handleBusyChange = (value) => {
+    setBusy(value);
+    onBusyChange(value);
+  };
+  const handleCloseDetails = () => setSelectedId("");
+  const handleEditDetails = (event) => setSelectedId(event.currentTarget.value);
   return (
     <>
       <div className="page-heading">
@@ -32,16 +41,11 @@ export default function Students({
           key={selected.id}
           student={selected}
           tutors={tutors}
-          achievements={achievements.filter(
-            (achievement) => achievement.studentId === selected.id,
-          )}
+          achievements={selectedAchievements}
           onSaved={onSaved}
           onAchievementRemoved={onAchievementRemoved}
-          onBusyChange={(value) => {
-            setBusy(value);
-            onBusyChange(value);
-          }}
-          onClose={() => setSelectedId("")}
+          onBusyChange={handleBusyChange}
+          onClose={handleCloseDetails}
         />
       )}
       <div className="student-grid">
@@ -70,7 +74,8 @@ export default function Students({
                 className="secondary-button student-details-button"
                 type="button"
                 disabled={preview || busy}
-                onClick={() => setSelectedId(student.id)}
+                value={student.id}
+                onClick={handleEditDetails}
               >
                 Edit details for {student.name}
               </button>
@@ -126,4 +131,6 @@ export default function Students({
       )}
     </>
   );
-}
+};
+
+export default Students;

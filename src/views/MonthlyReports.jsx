@@ -2,12 +2,14 @@ import { useState } from "react";
 import { calculateReport, currentMonth } from "../lib/reports.js";
 import { formatDate } from "../data/sampleData.js";
 
-export default function MonthlyReports({ records: data, preview }) {
+const MonthlyReports = ({ records: data, preview }) => {
   const { achievements, sessions, students, tutors } = data;
   const [month, setMonth] = useState(() =>
     preview ? "2026-09" : currentMonth(),
   );
   const [tutorId, setTutorId] = useState("");
+  const handleMonthChange = (event) => setMonth(event.currentTarget.value);
+  const handleTutorChange = (event) => setTutorId(event.currentTarget.value);
   const {
     records,
     milestones,
@@ -40,16 +42,13 @@ export default function MonthlyReports({ records: data, preview }) {
           <input
             type="month"
             value={month}
-            onChange={(event) => setMonth(event.target.value)}
+            onChange={handleMonthChange}
             required
           />
         </label>
         <label>
           Tutor
-          <select
-            value={tutorId}
-            onChange={(event) => setTutorId(event.target.value)}
-          >
+          <select value={tutorId} onChange={handleTutorChange}>
             <option value="">All tutors</option>
             {tutors.map((tutor) => (
               <option key={tutor.id} value={tutor.id}>
@@ -129,4 +128,6 @@ export default function MonthlyReports({ records: data, preview }) {
       </section>
     </>
   );
-}
+};
+
+export default MonthlyReports;

@@ -18,6 +18,15 @@ export default [
     rules: {
       ...js.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "JSXAttribute[name.name=/^on[A-Z]/] > JSXExpressionContainer > :matches(ArrowFunctionExpression, FunctionExpression)",
+          message:
+            "Define a named arrow-function handler and reference it in the JSX attribute.",
+        },
+      ],
       "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z]" }],
       "react-refresh/only-export-components": [
         "warn",

@@ -7,7 +7,7 @@ import * as sampleData from "./data/sampleData.js";
 
 const views = { Attendance, Students, "Monthly Reports": MonthlyReports };
 
-export default function App() {
+const App = () => {
   const [currentView, setCurrentView] = useState("Attendance");
   const [preview] = useState(() => !isDatabaseConfigured());
   const [records, setRecords] = useState(() => (preview ? sampleData : null));
@@ -31,13 +31,13 @@ export default function App() {
     };
   }, [preview, reload]);
 
-  function refreshRecords() {
+  const refreshRecords = () => {
     setRecords(null);
     setLoadError("");
     setReload((value) => value + 1);
-  }
+  };
 
-  function recordSaved(collection, record) {
+  const recordSaved = (collection, record) => {
     setRecords((previous) => ({
       ...previous,
       [collection]: previous[collection].some((item) => item.id === record.id)
@@ -46,14 +46,18 @@ export default function App() {
           )
         : [...previous[collection], record],
     }));
-  }
+  };
 
-  function achievementRemoved(id) {
+  const achievementRemoved = (id) => {
     setRecords((previous) => ({
       ...previous,
       achievements: previous.achievements.filter((item) => item.id !== id),
     }));
-  }
+  };
+
+  const handleViewChange = (event) => {
+    setCurrentView(event.currentTarget.value);
+  };
 
   return (
     <div className="app-shell">
@@ -79,7 +83,8 @@ export default function App() {
               type="button"
               disabled={busy}
               aria-current={currentView === name ? "page" : undefined}
-              onClick={() => setCurrentView(name)}
+              value={name}
+              onClick={handleViewChange}
             >
               <span className="nav-number" aria-hidden="true">
                 0{index + 1}
@@ -159,4 +164,6 @@ export default function App() {
       </div>
     </div>
   );
-}
+};
+
+export default App;
